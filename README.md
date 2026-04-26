@@ -50,7 +50,7 @@ GITHUB_REPO=your-org/your-repo \
 ./scripts/setup-gcp.sh
 ```
 
-This enables APIs, creates a **Docker** Artifact Registry repo (default id `website` in **`europe-west1`**), Workload Identity Federation for GitHub Actions, and a deployer service account. Override region only if you know you need another: `GCP_REGION=… ./scripts/setup-gcp.sh`.
+This enables APIs, creates a **Docker** Artifact Registry repo (default id `website` in **`europe-west1`**), Workload Identity Federation for GitHub Actions, and a deployer service account. It does **not** create a Cloud Run service — the **Release** workflow (on tag `v*`) or a manual `gcloud run deploy` does that on first push. Override region only if you need another: `GCP_REGION=… ./scripts/setup-gcp.sh`.
 
 Image URL shape:
 
