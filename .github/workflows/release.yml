@@ -48,10 +48,14 @@ jobs:
             elif [ -n "$_v" ]; then printf '%s' "$_v"
             else printf '%s' "$_s"; fi
           }
-          GP="$(pick "$IN_GCP_PROJECT_ID" "$VAR_PROJECT_ID" "$SECRET_PROJECT_ID")"
-          GR="$(pick "$IN_GCP_REGION" "$VAR_REGION" "$SECRET_REGION")"
-          GS="$(pick "$IN_CLOUD_RUN_SERVICE" "$VAR_SERVICE" "$SECRET_SERVICE")"
-          GA="$(pick "$IN_GCP_ARTIFACT_REPOSITORY" "$VAR_ARTIFACT" "$SECRET_ARTIFACT")"
+          # Variables pasted with CRLF end up with \r in values — invalid in Docker image refs.
+          clean() {
+            printf '%s' "$1" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+          }
+          GP="$(clean "$(pick "$IN_GCP_PROJECT_ID" "$VAR_PROJECT_ID" "$SECRET_PROJECT_ID")")"
+          GR="$(clean "$(pick "$IN_GCP_REGION" "$VAR_REGION" "$SECRET_REGION")")"
+          GS="$(clean "$(pick "$IN_CLOUD_RUN_SERVICE" "$VAR_SERVICE" "$SECRET_SERVICE")")"
+          GA="$(clean "$(pick "$IN_GCP_ARTIFACT_REPOSITORY" "$VAR_ARTIFACT" "$SECRET_ARTIFACT")")"
           {
             echo "GCP_PROJECT_ID<<__EOF"
             echo "$GP"
