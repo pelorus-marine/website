@@ -53,6 +53,10 @@ gcloud services enable \
   cloudresourcemanager.googleapis.com \
   --project="${PROJECT_ID}"
 
+# New projects: IAM can lag a few seconds after enable + first SA creation.
+echo "==> Waiting for IAM/API propagation (15s)"
+sleep 15
+
 echo "==> Artifact Registry Docker repository: ${ARTIFACT_REPO} (${REGION})"
 if ! gcloud artifacts repositories describe "${ARTIFACT_REPO}" \
   --location="${REGION}" \
@@ -97,12 +101,35 @@ if ! gcloud iam service-accounts describe "${SA_EMAIL}" \
     --display-name="GitHub Actions deploy (WIF)"
 fi
 
+# Project IAM rejects bindings until the SA is visible everywhere (eventual consistency).
+echo "==> Waiting for service account ${SA_EMAIL} to be bindable"
+for _ in $(seq 1 30); do
+  if gcloud iam service-accounts describe "${SA_EMAIL}" \
+    --project="${PROJECT_ID}" &>/dev/null; then
+    break
+  fi
+  sleep 2
+done
+gcloud iam service-accounts describe "${SA_EMAIL}" \
+  --project="${PROJECT_ID}" &>/dev/null \
+  || die "service account ${SA_EMAIL} still not visible — check PROJECT_ID and IAM permissions"
+
 echo "==> Project roles for ${SA_EMAIL}"
 for role in roles/artifactregistry.writer roles/run.admin; do
-  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="${role}" \
-    --quiet
+  ok=0
+  for attempt in 1 2 3 4 5 6; do
+    if gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+      --member="serviceAccount:${SA_EMAIL}" \
+      --role="${role}" \
+      --quiet; then
+      ok=1
+      break
+    fi
+    echo "warn: ${role} bind failed (attempt ${attempt}/6), retrying in 10s..." >&2
+    sleep 10
+  done
+  [[ "${ok}" -eq 1 ]] \
+    || die "failed to bind ${role} to ${SA_EMAIL}. If you see 'condition' errors, run: gcloud alpha iam policies lint-condition --project=${PROJECT_ID}"
 done
 
 echo "==> Let deployer act as Cloud Run runtime SA: ${RUNTIME_SA}"
