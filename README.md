@@ -64,8 +64,18 @@ Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
 | `GCP_REGION` | `europe-southwest1` | Cloud Run + Artifact Registry location |
 | `GCP_ARTIFACT_REPOSITORY` | `website` | Artifact Registry **repository id** (Docker) |
 | `CLOUD_RUN_SERVICE` | `sevenseas-website` | Cloud Run service name |
+| `GCP_ACTIONS_ENVIRONMENT` | *(omit or `production`)* | GitHub **Environment** name for the release job; default in workflow is `gcp` |
 
 If you already added these four under **Secrets** instead, the release workflow still picks them up (same names). They must live under **Actions** secrets/variables, not the Dependabot or Codespaces tabs. For **organization** variables, each name must be allowed for this repository.
+
+**GitHub Environment (common gotcha):** The release job uses `environment: gcp` by default (or whatever you set in repository variable **`GCP_ACTIONS_ENVIRONMENT`**). Values stored **only** under **Settings → Environments → _name_ → Environment secrets/variables** are invisible unless the workflow sets a matching `environment`. Either:
+
+- Create an environment named **`gcp`** (no protection rules needed) and add the same names there, **or**
+- Keep using **repository**-level Variables/Secrets (they still work; the job may reference an empty environment you create once).
+
+Put **`GCP_WORKLOAD_IDENTITY_PROVIDER`** and **`GCP_SERVICE_ACCOUNT`** in the **same** place as the four deploy keys (repository or that environment), not split across scopes.
+
+**Manual test:** **Actions** → **Release** → **Run workflow** — optional inputs override Variables/Secrets for that run. Open the job summary to see a **length** table (not values) for debugging.
 
 **Repository secrets**:
 
