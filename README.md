@@ -65,7 +65,7 @@ Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
 | `GCP_ARTIFACT_REPOSITORY` | `website` | Artifact Registry **repository id** (Docker) |
 | `CLOUD_RUN_SERVICE` | `sevenseas-website` | Cloud Run service name |
 
-If you already added these four under **Secrets** instead, the release workflow still picks them up (same names).
+If you already added these four under **Secrets** instead, the release workflow still picks them up (same names). They must live under **Actions** secrets/variables, not the Dependabot or Codespaces tabs. For **organization** variables, each name must be allowed for this repository.
 
 **Repository secrets**:
 

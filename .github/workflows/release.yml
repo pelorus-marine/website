@@ -12,25 +12,37 @@ permissions:
   packages: write
   id-token: write
 
-# Non-secret deploy config: use Actions **Variables** (preferred) or **Secrets** with the same names.
-env:
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.GCP_REGION || secrets.GCP_REGION }}
-  CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE || secrets.CLOUD_RUN_SERVICE }}
-  GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY || secrets.GCP_ARTIFACT_REPOSITORY }}
-
 jobs:
   publish-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # Pass vars and secrets as separate step env keys (no `||` in expressions — avoids empty merges).
+      # Prefer Variables; if empty, use Secrets with the same names.
+      - name: Resolve GCP deploy configuration
+        run: |
+          merge() { local v="$1" s="$2"; if [ -n "$v" ]; then printf '%s' "$v"; else printf '%s' "$s"; fi; }
+          echo "GCP_PROJECT_ID=$(merge "$VAR_PROJECT_ID" "$SECRET_PROJECT_ID")" >> "$GITHUB_ENV"
+          echo "GCP_REGION=$(merge "$VAR_REGION" "$SECRET_REGION")" >> "$GITHUB_ENV"
+          echo "CLOUD_RUN_SERVICE=$(merge "$VAR_SERVICE" "$SECRET_SERVICE")" >> "$GITHUB_ENV"
+          echo "GCP_ARTIFACT_REPOSITORY=$(merge "$VAR_ARTIFACT" "$SECRET_ARTIFACT")" >> "$GITHUB_ENV"
+        env:
+          VAR_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          SECRET_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          VAR_REGION: ${{ vars.GCP_REGION }}
+          SECRET_REGION: ${{ secrets.GCP_REGION }}
+          VAR_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+          SECRET_SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          VAR_ARTIFACT: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+          SECRET_ARTIFACT: ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+
       - name: Check GCP deploy configuration
         run: |
           missing=0
-          hint="(repository **Variables** or **Secrets** → Actions)"
-          [ -n "$GCP_PROJECT_ID" ] || { echo "::error::Set GCP_PROJECT_ID $hint"; missing=1; }
-          [ -n "$GCP_REGION" ] || { echo "::error::Set GCP_REGION $hint"; missing=1; }
-          [ -n "$CLOUD_RUN_SERVICE" ] || { echo "::error::Set CLOUD_RUN_SERVICE $hint"; missing=1; }
-          [ -n "$GCP_ARTIFACT_REPOSITORY" ] || { echo "::error::Set GCP_ARTIFACT_REPOSITORY (Artifact Registry Docker repo id) $hint"; missing=1; }
+          hint="Settings → Secrets and variables → Actions → Variables or Secrets (names must match exactly)"
+          [ -n "$GCP_PROJECT_ID" ] || { echo "::error::Missing GCP_PROJECT_ID — $hint"; missing=1; }
+          [ -n "$GCP_REGION" ] || { echo "::error::Missing GCP_REGION — $hint"; missing=1; }
+          [ -n "$CLOUD_RUN_SERVICE" ] || { echo "::error::Missing CLOUD_RUN_SERVICE — $hint"; missing=1; }
+          [ -n "$GCP_ARTIFACT_REPOSITORY" ] || { echo "::error::Missing GCP_ARTIFACT_REPOSITORY (Artifact Registry Docker repo id) — $hint"; missing=1; }
           exit "$missing"
 
       - uses: actions/checkout@v4
