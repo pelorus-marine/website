@@ -39,20 +39,24 @@ A tag matching `v*` or a manual **Actions → Release → Run workflow** runs [`
 
 Cloud Run only pulls from `gcr.io`, `REGION-docker.pkg.dev`, or `docker.io` — not `ghcr.io` unless you add an [Artifact Registry remote repo](https://cloud.google.com/artifact-registry/docs/repositories/remote-repo). This workflow pushes the same image to GHCR and Artifact Registry.
 
-### One-time: Artifact Registry Docker repository
+### One-time: GCP from scratch (`europe-west1`)
 
-Pick an id (example: `website`). Same region as Cloud Run is typical:
+Use [`.github/workflows/release.yml`](.github/workflows/release.yml) after this. From a clean project (billing on):
 
 ```bash
-gcloud artifacts repositories create website \
-  --repository-format=docker \
-  --location=europe-southwest1 \
-  --description="Website images"
+gcloud config set project YOUR_PROJECT_ID
+PROJECT_ID=YOUR_PROJECT_ID \
+GITHUB_REPO=your-org/your-repo \
+./scripts/setup-gcp.sh
 ```
 
-Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
+This enables APIs, creates a **Docker** Artifact Registry repo (default id `website` in **`europe-west1`**), Workload Identity Federation for GitHub Actions, and a deployer service account. Override region only if you know you need another: `GCP_REGION=… ./scripts/setup-gcp.sh`.
 
-`europe-southwest1-docker.pkg.dev/PROJECT_ID/website/website:TAG`
+Image URL shape:
+
+`europe-west1-docker.pkg.dev/PROJECT_ID/website/website:TAG`
+
+(`website` twice = Artifact Registry **repository id** vs image name in the workflow.)
 
 ### GitHub configuration
 
@@ -64,10 +68,10 @@ The job uses GitHub **Environment** **`gcp`** by default (create it under Settin
 
 | Name | Example |
 |------|---------|
-| `GCP_PROJECT_ID` | `seven-seas-494519` |
-| `GCP_REGION` | `europe-southwest1` (avoid pasting CRLF; or rely on the workflow strip) |
+| `GCP_PROJECT_ID` | your project id |
+| `GCP_REGION` | `europe-west1` (match Artifact Registry + Cloud Run; avoid CRLF pastes) |
 | `GCP_ARTIFACT_REPOSITORY` | `website` (Artifact Registry repository id) |
-| `CLOUD_RUN_SERVICE` | `sevenseas-website` |
+| `CLOUD_RUN_SERVICE` | e.g. `pelorus-website` (must match workflow deploy name) |
 
 **Secrets** (always):
 
@@ -82,17 +86,7 @@ Normally you’d put a GCP **JSON key** in GitHub so Actions can call `gcloud`. 
 
 **Workload Identity Federation (WIF)** avoids keys: GitHub proves who it is with a short-lived OIDC token; Google trusts GitHub and lets that workflow **act as** one specific **Google Cloud service account** — a “robot user” in your project (email ends in `@…iam.gserviceaccount.com`). That robot account is what people mean by the **“WIF service account”** here: it’s just the GCP service account you bind to the GitHub pool/provider.
 
-**Scripted setup** (after `gcloud auth login` and `gcloud config set project …`):
-
-```bash
-PROJECT_ID=your-gcp-project \
-GITHUB_REPO=your-org/your-repo \
-./scripts/setup-gcp-wif-github-actions.sh
-```
-
-`GITHUB_REPO` must be the full **`owner/repo`** string GitHub puts in OIDC (for example `pelorus-marine/website`), not just `website`.
-
-The script enables APIs, creates a workload identity pool + GitHub OIDC provider (restricted to that repo), creates a deployer service account, grants **Artifact Registry Writer** and **Cloud Run Admin**, lets the deployer use the default **Compute** service account as the Cloud Run runtime identity, prints **`GCP_WORKLOAD_IDENTITY_PROVIDER`** and **`GCP_SERVICE_ACCOUNT`** for GitHub secrets. Optional env: `POOL_ID`, `PROVIDER_ID`, `SA_ID`, `CLOUD_RUN_RUNTIME_SA` (see script header).
+**Scripted setup** is **`./scripts/setup-gcp.sh`** (see **One-time: GCP from scratch** above). `GITHUB_REPO` must be the full **`owner/repo`** OIDC claim (e.g. `pelorus-marine/website`). The script prints WIF secrets and the GitHub Variables to set; optional env is documented in the script header.
 
 **Manual setup:** follow [Authenticate to Google Cloud from GitHub Actions](https://cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines) or the [google-github-actions/auth README](https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation). In outline: pool → GitHub provider → service account → IAM binding so only your repo can impersonate that SA → paste the provider resource name and SA email into the secrets above.
 

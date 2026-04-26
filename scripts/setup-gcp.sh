@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Provision Workload Identity Federation for GitHub Actions + a deployer service account
-# (Artifact Registry push + Cloud Run deploy). No JSON keys.
+# One-shot GCP bootstrap for this repo: APIs, Artifact Registry (Docker), WIF for GitHub Actions,
+# deployer service account (push AR + deploy Cloud Run). Region defaults to europe-west1 (Cloud Run
+# custom domain mapping is supported there). No JSON keys.
 #
-# Prerequisites: gcloud installed; logged in; billing enabled on the project.
+# Prerequisites: gcloud installed; `gcloud auth login`; billing on the project.
 #
 # Usage:
 #   PROJECT_ID=your-gcp-project \
 #   GITHUB_REPO=org-or-user/repo-name \
-#   ./scripts/setup-gcp-wif-github-actions.sh
+#   ./scripts/setup-gcp.sh
 #
-# Optional env (defaults shown):
-#   POOL_ID=github-actions
-#   PROVIDER_ID=github
-#   SA_ID=github-actions-deploy
-#   CLOUD_RUN_RUNTIME_SA=   # default: PROJECT_NUMBER-compute@developer.gserviceaccount.com
+# Optional env:
+#   GCP_REGION           default: europe-west1
+#   GCP_ARTIFACT_REPOSITORY   default: website  (Docker repo id in Artifact Registry)
+#   CLOUD_RUN_SERVICE    default: pelorus-website  (printed for GitHub variable; first deploy creates it)
+#   POOL_ID              default: github-actions
+#   PROVIDER_ID          default: github
+#   SA_ID                default: github-actions-deploy
+#   CLOUD_RUN_RUNTIME_SA  default: PROJECT_NUMBER-compute@developer.gserviceaccount.com
 #
 set -euo pipefail
 
@@ -24,8 +28,11 @@ die() {
 
 [[ -n "${PROJECT_ID:-}" ]] || die "set PROJECT_ID (GCP project id)"
 [[ -n "${GITHUB_REPO:-}" ]] || die "set GITHUB_REPO (e.g. pelorus-marine/website)"
-[[ "${GITHUB_REPO}" == *"/"* ]] || die "GITHUB_REPO must be owner/repo (GitHub's repository claim), not just the repo name — e.g. pelorus-marine/website (got: ${GITHUB_REPO})"
+[[ "${GITHUB_REPO}" == *"/"* ]] || die "GITHUB_REPO must be owner/repo, not just the repo slug (got: ${GITHUB_REPO})"
 
+REGION="${GCP_REGION:-europe-west1}"
+ARTIFACT_REPO="${GCP_ARTIFACT_REPOSITORY:-website}"
+CLOUD_RUN_HINT="${CLOUD_RUN_SERVICE:-pelorus-website}"
 POOL_ID="${POOL_ID:-github-actions}"
 PROVIDER_ID="${PROVIDER_ID:-github}"
 SA_ID="${SA_ID:-github-actions-deploy}"
@@ -43,7 +50,19 @@ gcloud services enable \
   iam.googleapis.com \
   artifactregistry.googleapis.com \
   run.googleapis.com \
+  cloudresourcemanager.googleapis.com \
   --project="${PROJECT_ID}"
+
+echo "==> Artifact Registry Docker repository: ${ARTIFACT_REPO} (${REGION})"
+if ! gcloud artifacts repositories describe "${ARTIFACT_REPO}" \
+  --location="${REGION}" \
+  --project="${PROJECT_ID}" &>/dev/null; then
+  gcloud artifacts repositories create "${ARTIFACT_REPO}" \
+    --repository-format=docker \
+    --location="${REGION}" \
+    --project="${PROJECT_ID}" \
+    --description="Website container images"
+fi
 
 echo "==> Workload Identity Pool: ${POOL_ID}"
 if ! gcloud iam workload-identity-pools describe "${POOL_ID}" \
@@ -103,15 +122,21 @@ gcloud iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
   --quiet
 
 WIF_PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
+AR_HOST="${REGION}-docker.pkg.dev"
 
 echo ""
-echo "Done. Add these as GitHub repository secrets (Settings → Secrets and variables → Actions):"
+echo "Done. Set GitHub Actions **Secrets** (same scope: repository or Environment gcp):"
 echo ""
-echo "  Name: GCP_WORKLOAD_IDENTITY_PROVIDER"
-echo "  Value: ${WIF_PROVIDER}"
+echo "  GCP_WORKLOAD_IDENTITY_PROVIDER=${WIF_PROVIDER}"
+echo "  GCP_SERVICE_ACCOUNT=${SA_EMAIL}"
 echo ""
-echo "  Name: GCP_SERVICE_ACCOUNT"
-echo "  Value: ${SA_EMAIL}"
+echo "Set GitHub Actions **Variables** (or Secrets):"
 echo ""
-echo "Repository Actions variables still required: GCP_PROJECT_ID, GCP_REGION, GCP_ARTIFACT_REPOSITORY, CLOUD_RUN_SERVICE."
-echo "Create the Artifact Registry Docker repo first if you have not (see README)."
+echo "  GCP_PROJECT_ID=${PROJECT_ID}"
+echo "  GCP_REGION=${REGION}"
+echo "  GCP_ARTIFACT_REPOSITORY=${ARTIFACT_REPO}"
+echo "  CLOUD_RUN_SERVICE=${CLOUD_RUN_HINT}"
+echo ""
+echo "Image URL shape: ${AR_HOST}/${PROJECT_ID}/${ARTIFACT_REPO}/website:TAG"
+echo "Cloud Run in ${REGION} supports console **Domain mappings** (preview); otherwise use a global HTTPS LB."
+echo ""
