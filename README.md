@@ -43,9 +43,9 @@ Pushing a tag matching `v*` (e.g. `v1.0.0`) runs [`.github/workflows/release.yml
 
 | Variable | Example | Purpose |
 |----------|---------|---------|
-| `GCP_PROJECT_ID` | `my-project-123` | GCP project |
+| `GCP_PROJECT_ID` | `seven-seas-494519` | GCP project |
 | `GCP_REGION` | `europe-southwest1` | Cloud Run region |
-| `CLOUD_RUN_SERVICE` | `pelorus-website` | Service name |
+| `CLOUD_RUN_SERVICE` | `sevenseas-website` | Service name |
 
 **Repository secrets**:
 
