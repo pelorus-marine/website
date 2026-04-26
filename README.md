@@ -56,7 +56,7 @@ Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
 
 ### GitHub configuration
 
-**Repository variables** (Settings → Secrets and variables → Actions → Variables):
+**Repository variables** (Settings → Secrets and variables → Actions → **Variables** — preferred for non-sensitive values):
 
 | Variable | Example | Purpose |
 |----------|---------|---------|
@@ -64,6 +64,8 @@ Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
 | `GCP_REGION` | `europe-southwest1` | Cloud Run + Artifact Registry location |
 | `GCP_ARTIFACT_REPOSITORY` | `website` | Artifact Registry **repository id** (Docker) |
 | `CLOUD_RUN_SERVICE` | `sevenseas-website` | Cloud Run service name |
+
+If you already added these four under **Secrets** instead, the release workflow still picks them up (same names).
 
 **Repository secrets**:
 

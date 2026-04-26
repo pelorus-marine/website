@@ -12,28 +12,25 @@ permissions:
   packages: write
   id-token: write
 
+# Non-secret deploy config: use Actions **Variables** (preferred) or **Secrets** with the same names.
 env:
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ vars.GCP_REGION }}
-  CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
-  GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION || secrets.GCP_REGION }}
+  CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE || secrets.CLOUD_RUN_SERVICE }}
+  GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY || secrets.GCP_ARTIFACT_REPOSITORY }}
 
 jobs:
   publish-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check repository variables
-        env:
-          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          GCP_REGION: ${{ vars.GCP_REGION }}
-          CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
-          GCP_ARTIFACT_REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      - name: Check GCP deploy configuration
         run: |
           missing=0
-          [ -n "$GCP_PROJECT_ID" ] || { echo "::error::Set repository variable GCP_PROJECT_ID"; missing=1; }
-          [ -n "$GCP_REGION" ] || { echo "::error::Set repository variable GCP_REGION"; missing=1; }
-          [ -n "$CLOUD_RUN_SERVICE" ] || { echo "::error::Set repository variable CLOUD_RUN_SERVICE"; missing=1; }
-          [ -n "$GCP_ARTIFACT_REPOSITORY" ] || { echo "::error::Set repository variable GCP_ARTIFACT_REPOSITORY (Artifact Registry Docker repo id)"; missing=1; }
+          hint="(repository **Variables** or **Secrets** → Actions)"
+          [ -n "$GCP_PROJECT_ID" ] || { echo "::error::Set GCP_PROJECT_ID $hint"; missing=1; }
+          [ -n "$GCP_REGION" ] || { echo "::error::Set GCP_REGION $hint"; missing=1; }
+          [ -n "$CLOUD_RUN_SERVICE" ] || { echo "::error::Set CLOUD_RUN_SERVICE $hint"; missing=1; }
+          [ -n "$GCP_ARTIFACT_REPOSITORY" ] || { echo "::error::Set GCP_ARTIFACT_REPOSITORY (Artifact Registry Docker repo id) $hint"; missing=1; }
           exit "$missing"
 
       - uses: actions/checkout@v4
