@@ -33,11 +33,11 @@ docker run --rm -p 8080:8080 pelorus-website:local
 
 `build/` is gitignored. The binary listens on **`0.0.0.0`** and **`PORT`** (default `8080`) for [Cloud Run](https://cloud.google.com/run/docs/container-contract).
 
-## Release: GHCR + Artifact Registry + Cloud Run (tags only)
+## Release: GHCR + Artifact Registry + Cloud Run
 
-Pushing a tag matching `v*` (e.g. `v1.0.0`) runs [`.github/workflows/release.yml`](.github/workflows/release.yml): build once, push to **GitHub Container Registry** and **Google Artifact Registry**, then deploy **Cloud Run from Artifact Registry**.
+A tag matching `v*` or a manual **Actions → Release → Run workflow** runs [`.github/workflows/release.yml`](.github/workflows/release.yml): build once, push to **GHCR** and **Artifact Registry**, deploy **Cloud Run** from Artifact Registry.
 
-Cloud Run only accepts images from `gcr.io`, `REGION-docker.pkg.dev` (Artifact Registry), or `docker.io` — **not** `ghcr.io` unless you add an [Artifact Registry remote repository](https://cloud.google.com/artifact-registry/docs/repositories/remote-repo). This repo pushes the same image to both GHCR (for you / GitHub) and Artifact Registry (for deploy).
+Cloud Run only pulls from `gcr.io`, `REGION-docker.pkg.dev`, or `docker.io` — not `ghcr.io` unless you add an [Artifact Registry remote repo](https://cloud.google.com/artifact-registry/docs/repositories/remote-repo). This workflow pushes the same image to GHCR and Artifact Registry.
 
 ### One-time: Artifact Registry Docker repository
 
@@ -56,33 +56,25 @@ Use that id as **`GCP_ARTIFACT_REPOSITORY`** below. Images will be:
 
 ### GitHub configuration
 
-**Repository variables** (Settings → Secrets and variables → Actions → **Variables** — preferred for non-sensitive values):
+Settings → **Secrets and variables** → **Actions** (not Dependabot/Codespaces). Organization variables must be allowed for this repository.
 
-| Variable | Example | Purpose |
-|----------|---------|---------|
-| `GCP_PROJECT_ID` | `seven-seas-494519` | GCP project |
-| `GCP_REGION` | `europe-southwest1` | Cloud Run + Artifact Registry location |
-| `GCP_ARTIFACT_REPOSITORY` | `website` | Artifact Registry **repository id** (Docker) |
-| `CLOUD_RUN_SERVICE` | `sevenseas-website` | Cloud Run service name |
-| `GCP_ACTIONS_ENVIRONMENT` | *(omit or `production`)* | GitHub **Environment** name for the release job; default in workflow is `gcp` |
+The job uses GitHub **Environment** **`gcp`** by default (create it under Settings → Environments, or set repository variable **`GCP_ACTIONS_ENVIRONMENT`** to another name). Put deploy **variables/secrets and WIF secrets in the same scope** (repository or that environment); environment-only values are not visible without a matching `environment:` on the job.
 
-If you already added these four under **Secrets** instead, the release workflow still picks them up (same names). They must live under **Actions** secrets/variables, not the Dependabot or Codespaces tabs. For **organization** variables, each name must be allowed for this repository.
+**Variables** (preferred) or **Secrets** with the same names — workflow accepts either:
 
-**GitHub Environment (common gotcha):** The release job uses `environment: gcp` by default (or whatever you set in repository variable **`GCP_ACTIONS_ENVIRONMENT`**). Values stored **only** under **Settings → Environments → _name_ → Environment secrets/variables** are invisible unless the workflow sets a matching `environment`. Either:
+| Name | Example |
+|------|---------|
+| `GCP_PROJECT_ID` | `seven-seas-494519` |
+| `GCP_REGION` | `europe-southwest1` (avoid pasting CRLF; or rely on the workflow strip) |
+| `GCP_ARTIFACT_REPOSITORY` | `website` (Artifact Registry repository id) |
+| `CLOUD_RUN_SERVICE` | `sevenseas-website` |
 
-- Create an environment named **`gcp`** (no protection rules needed) and add the same names there, **or**
-- Keep using **repository**-level Variables/Secrets (they still work; the job may reference an empty environment you create once).
+**Secrets** (always):
 
-Put **`GCP_WORKLOAD_IDENTITY_PROVIDER`** and **`GCP_SERVICE_ACCOUNT`** in the **same** place as the four deploy keys (repository or that environment), not split across scopes.
-
-**Manual test:** **Actions** → **Release** → **Run workflow** — optional inputs override Variables/Secrets for that run. Open the job summary to see a **length** table (not values) for debugging.
-
-**Repository secrets**:
-
-| Secret | What to paste |
-|--------|----------------|
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full **provider resource name** (see below) |
-| `GCP_SERVICE_ACCOUNT` | **Service account email** you create in GCP (see below) |
+| Name | Value |
+|------|--------|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full provider resource name (see below) |
+| `GCP_SERVICE_ACCOUNT` | Deployer service account email |
 
 ### Workload Identity Federation in one minute
 

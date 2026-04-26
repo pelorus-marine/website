@@ -9,19 +9,19 @@ on:
   workflow_dispatch:
     inputs:
       GCP_PROJECT_ID:
-        description: Optional override (normally from Variables / Secrets)
+        description: Override (optional)
         required: false
         type: string
       GCP_REGION:
-        description: Optional override
+        description: Override (optional)
         required: false
         type: string
       CLOUD_RUN_SERVICE:
-        description: Optional override
+        description: Override (optional)
         required: false
         type: string
       GCP_ARTIFACT_REPOSITORY:
-        description: Optional override
+        description: Override (optional)
         required: false
         type: string
 
@@ -33,22 +33,18 @@ permissions:
 jobs:
   publish-and-deploy:
     runs-on: ubuntu-latest
-    # Environment-scoped secrets/variables are ONLY visible when the job sets `environment`.
-    # Default name `gcp`: create it once under Settings → Environments (no reviewers required),
-    # or set repository variable GCP_ACTIONS_ENVIRONMENT to an existing env (e.g. production).
+    # So Environment-scoped secrets/variables apply; default env name is `gcp` (override via GCP_ACTIONS_ENVIRONMENT).
     environment: ${{ vars.GCP_ACTIONS_ENVIRONMENT || 'gcp' }}
     steps:
       - name: Resolve GCP deploy configuration
         run: |
           set -e
-          # Priority: workflow_dispatch input → repository Variable → repository/Environment Secret
           pick() {
             _in="$1" _v="$2" _s="$3"
             if [ -n "$_in" ]; then printf '%s' "$_in"
             elif [ -n "$_v" ]; then printf '%s' "$_v"
             else printf '%s' "$_s"; fi
           }
-          # Variables pasted with CRLF end up with \r in values — invalid in Docker image refs.
           clean() {
             printf '%s' "$1" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
           }
@@ -70,15 +66,6 @@ jobs:
             echo "$GA"
             echo "__EOF"
           } >> "$GITHUB_ENV"
-          {
-            echo "## GCP config (lengths only — not values)"
-            echo "| Name | input | var | secret |"
-            echo "|------|------:|----:|-------:|"
-            echo "| GCP_PROJECT_ID | ${#IN_GCP_PROJECT_ID} | ${#VAR_PROJECT_ID} | ${#SECRET_PROJECT_ID} |"
-            echo "| GCP_REGION | ${#IN_GCP_REGION} | ${#VAR_REGION} | ${#SECRET_REGION} |"
-            echo "| CLOUD_RUN_SERVICE | ${#IN_CLOUD_RUN_SERVICE} | ${#VAR_SERVICE} | ${#SECRET_SERVICE} |"
-            echo "| GCP_ARTIFACT_REPOSITORY | ${#IN_GCP_ARTIFACT_REPOSITORY} | ${#VAR_ARTIFACT} | ${#SECRET_ARTIFACT} |"
-          } >> "$GITHUB_STEP_SUMMARY"
         env:
           IN_GCP_PROJECT_ID: ${{ github.event.inputs.GCP_PROJECT_ID }}
           IN_GCP_REGION: ${{ github.event.inputs.GCP_REGION }}
@@ -96,7 +83,7 @@ jobs:
       - name: Check GCP deploy configuration
         run: |
           missing=0
-          hint="Use repository **Variables** or **Secrets** (Actions), or the same names on GitHub **Environment** '${{ vars.GCP_ACTIONS_ENVIRONMENT || 'gcp' }}'. For manual test: **Actions → Release → Run workflow** and fill inputs."
+          hint="Set Actions Variables or Secrets (same names), or on GitHub Environment '${{ vars.GCP_ACTIONS_ENVIRONMENT || 'gcp' }}'. Optional: Run workflow with inputs."
           [ -n "$GCP_PROJECT_ID" ] || { echo "::error::Missing GCP_PROJECT_ID — $hint"; missing=1; }
           [ -n "$GCP_REGION" ] || { echo "::error::Missing GCP_REGION — $hint"; missing=1; }
           [ -n "$CLOUD_RUN_SERVICE" ] || { echo "::error::Missing CLOUD_RUN_SERVICE — $hint"; missing=1; }
