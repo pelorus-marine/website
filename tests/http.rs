@@ -72,7 +72,10 @@ async fn vendored_bootstrap_css_served() {
     assert_eq!(res.status(), 200);
     let body = std::str::from_utf8(res.body()).expect("utf-8");
     assert!(body.contains(".container"), "expected bootstrap css");
-    assert!(body.contains("Bootstrap"), "expected bootstrap banner comment");
+    assert!(
+        body.contains("Bootstrap"),
+        "expected bootstrap banner comment"
+    );
 }
 
 #[tokio::test]
