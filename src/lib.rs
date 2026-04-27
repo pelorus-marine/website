@@ -14,9 +14,22 @@ struct IndexTemplate {
     year: i32,
 }
 
+#[derive(Template)]
+#[template(path = "not_found.html")]
+struct NotFoundTemplate {
+    year: i32,
+}
+
 /// Renders the home page HTML from the Askama template.
 pub fn render_index_html() -> Result<String, askama::Error> {
     IndexTemplate {
+        year: COPYRIGHT_START_YEAR,
+    }
+    .render()
+}
+
+fn render_not_found_html() -> Result<String, askama::Error> {
+    NotFoundTemplate {
         year: COPYRIGHT_START_YEAR,
     }
     .render()
@@ -34,14 +47,29 @@ struct TemplateError;
 impl warp::reject::Reject for TemplateError {}
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
-    let (code, message) = if err.is_not_found() {
-        (StatusCode::NOT_FOUND, "Not Found")
-    } else if err.find::<TemplateError>().is_some() {
-        (StatusCode::INTERNAL_SERVER_ERROR, "Template render error")
+    if err.is_not_found() {
+        let reply = match render_not_found_html() {
+            Ok(body) => warp::reply::with_status(warp::reply::html(body), StatusCode::NOT_FOUND),
+            Err(_) => warp::reply::with_status(
+                warp::reply::html(String::from("<p>Not found</p>")),
+                StatusCode::NOT_FOUND,
+            ),
+        };
+        return Ok(reply);
+    }
+
+    let (code, message) = if err.find::<TemplateError>().is_some() {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            String::from("Template render error"),
+        )
     } else {
-        (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            String::from("Internal Server Error"),
+        )
     };
-    Ok(warp::reply::with_status(message, code))
+    Ok(warp::reply::with_status(warp::reply::html(message), code))
 }
 
 /// Full site filter: `/`, `/pelorus`, `/static/*`, `/favicon.ico`, plus rejection recovery.
@@ -112,5 +140,17 @@ mod tests {
         assert_eq!(root.status(), 200);
         assert_eq!(pelorus.status(), 200);
         assert_eq!(root.body(), pelorus.body());
+    }
+
+    #[tokio::test]
+    async fn routes_unknown_returns_404_html() {
+        let res = warp::test::request()
+            .method("GET")
+            .path("/missing-page")
+            .reply(&routes())
+            .await;
+        assert_eq!(res.status(), 404);
+        let body = std::str::from_utf8(res.body()).expect("utf-8");
+        assert!(body.contains("Oups"));
     }
 }

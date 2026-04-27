@@ -55,9 +55,8 @@
         padding-bottom: 0.5rem;
       }
 
-      /* Pelorus wordmark: Operation Napalm — CC0 (fonts-cc0) */
-      .navbar-brand,
-      .hero h1 {
+      /* Word “Pelorus” only — Operation Napalm (CC0, fonts-cc0) */
+      .pelorus-wordmark {
         font-family: "Operation Napalm", system-ui, sans-serif;
         font-weight: 900;
         letter-spacing: 0.04em;
@@ -102,6 +101,7 @@
 
       .hero h1 {
         font-size: 2.25rem;
+        font-weight: 600;
         color: var(--bs-emphasis-color);
         margin-bottom: 0.75rem;
       }
@@ -165,7 +165,7 @@
       <div class="container">
         <a class="navbar-brand" href="/">
           <img src="/static/pelorus-favicon-32.png" alt="" />
-          Pelorus
+          <span class="pelorus-wordmark">Pelorus</span>
         </a>
         <div class="navbar-nav ms-auto">
           <a
@@ -182,7 +182,7 @@
     <main>
       <div class="hero">
         <img src="/static/pelorus-icon-200.png" alt="Pelorus" />
-        <h1>Pelorus</h1>
+        <h1><span class="pelorus-wordmark">Pelorus</span></h1>
         <p class="tagline">By sailors, for sailors.</p>
         <a
           class="why-link"

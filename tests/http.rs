@@ -38,6 +38,17 @@ async fn get_unknown_path_is_404() {
         .reply(&routes())
         .await;
     assert_eq!(res.status(), 404);
+    let ctype = res
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok());
+    assert!(
+        ctype.is_some_and(|c| c.starts_with("text/html")),
+        "expected text/html, got {ctype:?}"
+    );
+    let body = std::str::from_utf8(res.body()).expect("utf-8 body");
+    assert!(body.contains("Oups"), "expected friendly 404 copy");
+    assert!(body.contains("Back to home"));
 }
 
 #[tokio::test]
