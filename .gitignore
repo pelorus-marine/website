@@ -1,6 +1,7 @@
 /target
 /build
 ts/node_modules
+.cursor/
 
 # Ephemeral SQLite cache (see PELOURS_CACHE_DB_PATH)
 *.sqlite
