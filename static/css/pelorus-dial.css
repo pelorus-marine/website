@@ -71,14 +71,6 @@
   padding: 3rem 1rem;
 }
 
-/* static icon — sits above the dial */
-.hero-content-layer .tagline-hero-img {
-  width: 200px;
-  height: auto;
-  margin-bottom: 1.5rem;
-  opacity: 0.95;
-}
-
 @media (max-width: 576px) {
   .pelorus-dial {
     width: min(100vw, 520px);

@@ -1,17 +1,10 @@
-{% extends "error/base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Temporarily unavailable — {{ page_title }} — Pelorus{% endblock %}
 
-{% block navbar_extra %}
-        <div class="navbar-nav ms-auto gap-2 flex-row align-items-center">
-          <a class="nav-link {{ specifications_nav_class }}" href="/specifications/">Specifications</a>
-          <a class="nav-link {{ ecdis_nav_class }}" href="/ecdis">ECDIS</a>
-        </div>
-{% endblock %}
-
 {% block main_class %}error-main--document{% endblock %}
 
-{% block main %}
+{% block content %}
       <div class="unavail-shell">
         <h1>Temporarily unavailable</h1>
         <p>

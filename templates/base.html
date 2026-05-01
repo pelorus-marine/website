@@ -6,7 +6,10 @@
     <title>{% block title %}Pelorus{% endblock %}</title>
 
     <link rel="icon" type="image/png" sizes="32x32" href="/static/pelorus-favicon-32.png" />
+
     <link rel="stylesheet" href="/static/vendor/bootstrap-5.3.3/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/pelorus-dial.css" />
+    {% block head_links %}{% endblock %}
 
     <style>
       @font-face {
@@ -22,9 +25,14 @@
         --bs-body-bg: #0d1117;
         --bs-body-color: #c9d1d9;
         --bs-emphasis-color: #f0f6fc;
+        --bs-secondary-bg: #161b22;
+        --bs-tertiary-bg: #161b22;
         --bs-border-color: #30363d;
+        --bs-border-color-translucent: rgba(240, 246, 252, 0.1);
         --bs-link-color: #58a6ff;
+        --bs-link-color-rgb: 88, 166, 255;
         --bs-link-hover-color: #79c0ff;
+        --bs-link-hover-color-rgb: 121, 192, 255;
         --bs-secondary-color: #8b949e;
       }
 
@@ -59,6 +67,11 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        text-decoration: none;
+      }
+
+      .navbar-brand:hover {
+        color: var(--bs-emphasis-color);
       }
 
       .navbar-brand img {
@@ -76,8 +89,23 @@
         color: var(--bs-emphasis-color);
       }
 
-      main.error-main {
+      main {
         flex: 1 0 auto;
+        position: relative;
+      }
+
+      .pelorus-page-bg {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .pelorus-page-foreground {
+        position: relative;
+        z-index: 2;
+        min-height: 100%;
       }
 
       main.error-main--center {
@@ -141,27 +169,83 @@
         padding: 1rem 0;
         text-align: center;
       }
+
+      footer .footer-copyright {
+        margin-bottom: 0.4rem;
+      }
+
+      footer .footer-license {
+        font-size: 0.72rem;
+        line-height: 1.45;
+        max-width: 40rem;
+        margin-left: auto;
+        margin-right: auto;
+        color: var(--bs-secondary-color);
+      }
+
+      footer .footer-license a {
+        color: var(--bs-secondary-color);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      footer .footer-license a:hover {
+        color: var(--bs-link-color);
+      }
     </style>
+    {% block page_style %}{% endblock %}
     {% block head_extra %}{% endblock %}
   </head>
 
   <body>
     <nav class="navbar navbar-expand">
       <div class="container">
-        <a class="navbar-brand text-decoration-none" href="/">
+        <a class="navbar-brand" href="/">
           <img src="/static/pelorus-favicon-32.png" alt="" />
           <span class="pelorus-wordmark">Pelorus</span>
         </a>
-        {% block navbar_extra %}{% endblock %}
+        <div class="navbar-nav ms-auto gap-2 flex-row align-items-center">
+          <a class="nav-link {{ specifications_nav_class }}" href="/specifications/">Specifications</a>
+          <a class="nav-link {{ ecdis_nav_class }}" href="/ecdis">ECDIS</a>
+        </div>
       </div>
     </nav>
 
-    <main class="error-main {% block main_class %}error-main--center{% endblock %}">
-      {% block main %}{% endblock %}
+    <main class="{% block main_class %}{% endblock %}">
+      <div class="pelorus-page-bg" aria-hidden="true">
+        <div class="hero-bg-pelorus">
+          <div id="pelorus-dial-root"></div>
+        </div>
+      </div>
+      <div class="pelorus-page-foreground">
+        {% block content %}{% endblock %}
+      </div>
     </main>
 
+    <script src="/static/js/pelorus-dial.js" defer></script>
+    {% block body_scripts %}{% endblock %}
+
     <footer>
-      <div class="container">&copy; {{ year }} Pelorus Marine</div>
+      <div class="container">
+        <div class="footer-copyright">&copy; {{ year }} Pelorus Marine</div>
+        <div class="footer-license">
+          Website source:
+          <a
+            href="https://opensource.org/licenses/MIT"
+            target="_blank"
+            rel="noopener noreferrer"
+            >MIT</a
+          >
+          or
+          <a
+            href="https://www.apache.org/licenses/LICENSE-2.0"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Apache 2.0</a
+          >, at your option. Pelorus name, logos, artwork on this site, and related
+          branding are proprietary; all rights reserved.
+        </div>
+      </div>
     </footer>
   </body>
 </html>

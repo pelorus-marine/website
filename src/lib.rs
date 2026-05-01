@@ -35,12 +35,16 @@ const ECDIS_GITHUB: &str = "https://github.com/pelorus-marine/ecdis";
 #[template(path = "index.html")]
 struct IndexTemplate {
     year: i32,
+    specifications_nav_class: &'static str,
+    ecdis_nav_class: &'static str,
 }
 
 #[derive(Template)]
 #[template(path = "error/404.html")]
 struct NotFoundTemplate {
     year: i32,
+    specifications_nav_class: &'static str,
+    ecdis_nav_class: &'static str,
 }
 
 #[derive(Template)]
@@ -70,6 +74,8 @@ struct TemporarilyUnavailableTemplate {
 #[template(path = "error/500.html")]
 struct InternalErrorTemplate {
     year: i32,
+    specifications_nav_class: &'static str,
+    ecdis_nav_class: &'static str,
 }
 
 fn github_ref_or_default() -> String {
@@ -96,6 +102,8 @@ fn ecdis_architecture_md_url() -> String {
 pub fn render_index_html() -> Result<String, askama::Error> {
     IndexTemplate {
         year: COPYRIGHT_START_YEAR,
+        specifications_nav_class: "",
+        ecdis_nav_class: "",
     }
     .render()
 }
@@ -103,6 +111,8 @@ pub fn render_index_html() -> Result<String, askama::Error> {
 fn render_not_found_html() -> Result<String, askama::Error> {
     NotFoundTemplate {
         year: COPYRIGHT_START_YEAR,
+        specifications_nav_class: "",
+        ecdis_nav_class: "",
     }
     .render()
 }
@@ -110,6 +120,8 @@ fn render_not_found_html() -> Result<String, askama::Error> {
 fn render_internal_server_error_html() -> Result<String, askama::Error> {
     InternalErrorTemplate {
         year: COPYRIGHT_START_YEAR,
+        specifications_nav_class: "",
+        ecdis_nav_class: "",
     }
     .render()
 }
@@ -139,9 +151,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
 
     let body = match render_internal_server_error_html() {
         Ok(html) => html,
-        Err(_) => String::from(
-            "<!DOCTYPE html><title>Error</title><p>Internal Server Error</p>",
-        ),
+        Err(_) => String::from("<!DOCTYPE html><title>Error</title><p>Internal Server Error</p>"),
     };
     Ok(warp::reply::with_status(
         warp::reply::html(body),

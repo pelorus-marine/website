@@ -115,7 +115,7 @@ The deploy service account needs at least:
 
 Source code in this repository (for example Rust sources under `src/`, templates under `templates/`, and HTML/CSS authored for this site) is licensed under the MIT License **or** the Apache License, Version 2.0, at your option. See [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE).
 
-The Pelorus word mark, Pelorus Marine name and branding, and image assets under `static/` (including `pelorus-favicon-32.png`, `pelorus-icon-200.png`, and `pelorus-icon-500.png`) are proprietary to Pelorus Marine. All rights reserved. Those assets are not licensed under MIT or Apache-2.0.
+The Pelorus word mark, Pelorus Marine name and branding, and image assets under `static/` (including `pelorus-favicon-32.png`) are proprietary to Pelorus Marine. All rights reserved. Those assets are not licensed under MIT or Apache-2.0.
 
 Third-party CSS bundled with the site (Bootstrap under `static/vendor/bootstrap-5.3.3/`) remains under its license (Bootstrap: MIT).
 

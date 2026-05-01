@@ -90,7 +90,10 @@ async fn static_pelorus_dial_js_served() {
         .await;
     assert_eq!(res.status(), 200);
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
-    assert!(body.contains("mountPelorusDial"), "expected bundled dial script");
+    assert!(
+        body.contains("mountPelorusDial"),
+        "expected bundled dial script"
+    );
 }
 
 #[tokio::test]
@@ -103,7 +106,10 @@ async fn static_pelorus_dial_css_served() {
         .await;
     assert_eq!(res.status(), 200);
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
-    assert!(body.contains("pelorus-dial-drift"), "expected dial animation css");
+    assert!(
+        body.contains("pelorus-dial-drift"),
+        "expected dial animation css"
+    );
 }
 
 #[tokio::test]
