@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" sizes="200x200" href="/static/pelorus-icon-200.png" />
 
     <link rel="stylesheet" href="/static/vendor/bootstrap-5.3.3/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/pelorus-dial.css" />
 
     <style>
       @font-face {
@@ -86,41 +87,33 @@
       main {
         flex: 1 0 auto;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 3rem 1rem;
+        flex-direction: column;
+        min-height: 0;
       }
 
-      .hero img {
-        width: 200px;
-        height: auto;
-        margin-bottom: 1.5rem;
-        opacity: 0.95;
-      }
-
-      .hero h1 {
+      /* Typography for hero content (layout: static/css/pelorus-dial.css) */
+      .hero-content-layer h1 {
         font-size: 2.25rem;
         font-weight: 600;
         color: var(--bs-emphasis-color);
         margin-bottom: 0.75rem;
       }
 
-      .hero .tagline {
+      .hero-content-layer .tagline {
         font-style: italic;
         color: var(--bs-body-color);
         font-size: 1.1rem;
         margin-bottom: 2rem;
       }
 
-      .hero .why-link {
+      .hero-content-layer .why-link {
         font-size: 0.85rem;
         color: var(--bs-secondary-color);
         text-decoration: none;
         border-bottom: 1px dotted var(--bs-secondary-color);
       }
 
-      .hero .why-link:hover {
+      .hero-content-layer .why-link:hover {
         color: var(--bs-link-color);
         border-bottom-color: var(--bs-link-color);
       }
@@ -167,32 +160,38 @@
           <img src="/static/pelorus-favicon-32.png" alt="" />
           <span class="pelorus-wordmark">Pelorus</span>
         </a>
-        <div class="navbar-nav ms-auto">
-          <a
-            class="nav-link"
-            href="https://github.com/pelorus-marine/specifications"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Specs</a
-          >
+        <div class="navbar-nav ms-auto gap-2 flex-row align-items-center">
+          <a class="nav-link" href="/specifications/">Specifications</a>
+          <a class="nav-link" href="/ecdis">ECDIS</a>
         </div>
       </div>
     </nav>
 
     <main>
-      <div class="hero">
-        <img src="/static/pelorus-icon-200.png" alt="Pelorus" />
-        <h1><span class="pelorus-wordmark">Pelorus</span></h1>
-        <p class="tagline">By sailors, for sailors.</p>
-        <a
-          class="why-link"
-          href="https://github.com/pelorus-marine/specifications#why-pelorus"
-          target="_blank"
-          rel="noopener noreferrer"
-          >why pelorus?</a
-        >
+      <div class="hero-shell">
+        <div class="hero-bg-pelorus">
+          <div id="pelorus-dial-root"></div>
+        </div>
+        <div class="hero-content-layer">
+          <img
+            class="tagline-hero-img"
+            src="/static/pelorus-icon-200.png"
+            alt="Pelorus"
+          />
+          <h1><span class="pelorus-wordmark">Pelorus</span></h1>
+          <p class="tagline">By sailors, for sailors.</p>
+          <a
+            class="why-link"
+            href="https://github.com/pelorus-marine/specifications#why-pelorus"
+            target="_blank"
+            rel="noopener noreferrer"
+            >why pelorus?</a
+          >
+        </div>
       </div>
     </main>
+
+    <script src="/static/js/pelorus-dial.js" defer></script>
 
     <footer>
       <div class="container">

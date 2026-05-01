@@ -1,6 +1,19 @@
 # Pelorus website
 
-Minimal site for [Pelorus Marine](https://github.com/pelorus-marine): [warp](https://github.com/seanmonstar/warp), [Askama](https://github.com/djc/askama) templates, and Bootstrap 5.3.3 (vendored under `static/vendor/` so the page works without a CDN).
+Minimal site for [Pelorus Marine](https://github.com/pelorus-marine): [warp](https://github.com/seanmonstar/warp), [Askama](https://github.com/djc/askama) templates, Bootstrap 5.3.3 (vendored), and a small **TypeScript** bundle for the animated pelorus dial on the home page.
+
+## Frontend (TypeScript)
+
+The sighting-compass animation lives in **`ts/src/`** (ported from `temp/components/hero.jsx` → `PelorusDial`). It is bundled to **`static/js/pelorus-dial.js`** with [esbuild](https://esbuild.github.io/). Styles: **`static/css/pelorus-dial.css`**.
+
+```bash
+cd ts
+npm ci          # or: npm install
+npm run check   # tsc --noEmit
+npm run build   # writes ../static/js/pelorus-dial.js
+```
+
+**Commit the bundle** so `cargo run` works without Node; CI rebuilds it and fails if `static/js/pelorus-dial.js` is out of date (`git diff --exit-code`).
 
 ## Run locally
 
@@ -18,13 +31,14 @@ The server listens on `http://0.0.0.0:8080`. Routes: `/` and `/pelorus` (same pa
 cargo test
 ```
 
-Unit tests live in `src/lib.rs`; integration tests in `tests/http.rs`. GitHub Actions (`.github/workflows/ci.yml`) runs `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, and a **Docker image build** (no push) on pushes and pull requests to `main` or `master`.
+Unit tests live in `src/lib.rs`; integration tests in `tests/http.rs`. GitHub Actions (`.github/workflows/ci.yml`) runs **TypeScript** `npm ci` / `tsc` / esbuild, `cargo fmt --check`, `cargo clippy -D warnings`, and `cargo test`.
 
 ## Container image
 
 The **Rust release binary is built on the host or in CI**; the Dockerfile only packages that binary plus `static/` into a Distroless runtime (no compile inside Docker).
 
 ```bash
+cd ts && npm ci && npm run build && cd ..
 cargo build --release --locked
 ./scripts/prepare-image-context.sh   # writes build/image/{website,static/}
 docker build -f Dockerfile -t pelorus-website:local build/image

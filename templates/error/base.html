@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Page not found — Pelorus</title>
+    <title>{% block title %}Pelorus{% endblock %}</title>
 
     <link rel="icon" type="image/png" sizes="32x32" href="/static/pelorus-favicon-32.png" />
     <link rel="stylesheet" href="/static/vendor/bootstrap-5.3.3/bootstrap.min.css" />
@@ -66,13 +66,30 @@
         height: 24px;
       }
 
-      main {
+      .nav-link {
+        color: var(--bs-secondary-color);
+        font-size: 0.9rem;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        color: var(--bs-emphasis-color);
+      }
+
+      main.error-main {
         flex: 1 0 auto;
+      }
+
+      main.error-main--center {
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
         padding: 3rem 1rem;
+      }
+
+      main.error-main--document {
+        padding: 2rem 1rem 3rem;
       }
 
       .not-found h1 {
@@ -91,6 +108,30 @@
         line-height: 1.5;
       }
 
+      .unavail-shell {
+        max-width: 36rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .unavail-shell h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--bs-emphasis-color);
+        margin-bottom: 1rem;
+      }
+
+      .unavail-shell p {
+        color: var(--bs-body-color);
+        line-height: 1.55;
+        margin-bottom: 1rem;
+      }
+
+      .unavail-shell .small-links {
+        font-size: 0.85rem;
+        color: var(--bs-secondary-color);
+      }
+
       footer {
         flex-shrink: 0;
         border-top: 1px solid var(--bs-border-color);
@@ -101,6 +142,7 @@
         text-align: center;
       }
     </style>
+    {% block head_extra %}{% endblock %}
   </head>
 
   <body>
@@ -110,18 +152,12 @@
           <img src="/static/pelorus-favicon-32.png" alt="" />
           <span class="pelorus-wordmark">Pelorus</span>
         </a>
+        {% block navbar_extra %}{% endblock %}
       </div>
     </nav>
 
-    <main>
-      <div class="not-found">
-        <h1>Oups</h1>
-        <p>
-          Nothing here — this page doesn’t exist, or the address has a typo. If you followed a link
-          on our side, tell us and we’ll fix the chart.
-        </p>
-        <a class="btn btn-outline-primary" href="/">Back to home</a>
-      </div>
+    <main class="error-main {% block main_class %}error-main--center{% endblock %}">
+      {% block main %}{% endblock %}
     </main>
 
     <footer>

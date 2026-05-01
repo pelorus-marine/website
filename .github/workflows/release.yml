@@ -92,6 +92,22 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ts/package-lock.json
+
+      - name: Build frontend (TypeScript → static/js)
+        working-directory: ts
+        run: |
+          npm ci
+          npm run check
+          npm run build
+
+      - name: Verify JS bundle matches committed output
+        run: git diff --exit-code static/js/pelorus-dial.js
+
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2

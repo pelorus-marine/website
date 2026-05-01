@@ -1,0 +1,13 @@
+{
+  "name": "pelorus-website-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=../static/js/pelorus-dial.js --platform=browser --target=es2022",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,2 +1,9 @@
 /target
 /build
+ts/node_modules
+
+# Ephemeral SQLite cache (see PELOURS_CACHE_DB_PATH)
+*.sqlite
+*.sqlite3
+*.sq3
+*.db

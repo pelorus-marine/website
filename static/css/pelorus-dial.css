@@ -1,0 +1,87 @@
+/* Pelorus sighting-compass dial (background) — animations from temp/components/hero.css */
+
+:root {
+  --pelorus-brass: #c9a962;
+  --pelorus-ink: #0d1117;
+  --pelorus-ink-2: #21262d;
+  --pelorus-ink-3: #30363d;
+  --pelorus-ink-4: #484f58;
+  --pelorus-mono:
+    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+}
+
+.hero-shell {
+  position: relative;
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: min(70vh, 640px);
+}
+
+.hero-bg-pelorus {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0.5;
+  mask-image: radial-gradient(circle at center, black 32%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle at center, black 32%, transparent 72%);
+}
+
+.pelorus-dial {
+  width: min(120vh, 900px);
+  height: min(120vh, 900px);
+  max-width: 95vw;
+  animation: pelorus-dial-drift 240s linear infinite;
+}
+
+.pelorus-sight {
+  transform-origin: center;
+  animation: pelorus-sight-sweep 90s ease-in-out infinite alternate;
+}
+
+@keyframes pelorus-dial-drift {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes pelorus-sight-sweep {
+  0% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+  100% {
+    transform: rotate(-4deg);
+  }
+}
+
+.hero-content-layer {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+/* static icon — sits above the dial */
+.hero-content-layer .tagline-hero-img {
+  width: 200px;
+  height: auto;
+  margin-bottom: 1.5rem;
+  opacity: 0.95;
+}
+
+@media (max-width: 576px) {
+  .pelorus-dial {
+    width: min(100vw, 520px);
+    height: min(100vw, 520px);
+  }
+}
