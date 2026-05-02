@@ -23,12 +23,17 @@ CREATE TABLE IF NOT EXISTS architecture_cache (
 static CACHE_DB: std::sync::OnceLock<Arc<Mutex<Connection>>> = std::sync::OnceLock::new();
 
 /// At most one in-flight background revalidation per architecture slot (avoid stampedes).
-static REFRESH_IN_PROGRESS: [AtomicBool; 2] = [AtomicBool::new(false), AtomicBool::new(false)];
+static REFRESH_IN_PROGRESS: [AtomicBool; 3] = [
+    AtomicBool::new(false),
+    AtomicBool::new(false),
+    AtomicBool::new(false),
+];
 
 fn refresh_slot_index(slot: ArchitectureDocSlot) -> usize {
     match slot {
         ArchitectureDocSlot::Specifications => 0,
         ArchitectureDocSlot::Ecdis => 1,
+        ArchitectureDocSlot::Platform => 2,
     }
 }
 
@@ -36,6 +41,7 @@ fn refresh_slot_index(slot: ArchitectureDocSlot) -> usize {
 pub(crate) enum ArchitectureDocSlot {
     Specifications,
     Ecdis,
+    Platform,
 }
 
 impl ArchitectureDocSlot {
@@ -43,6 +49,7 @@ impl ArchitectureDocSlot {
         match self {
             ArchitectureDocSlot::Specifications => "specifications",
             ArchitectureDocSlot::Ecdis => "ecdis",
+            ArchitectureDocSlot::Platform => "platform",
         }
     }
 }
@@ -205,6 +212,7 @@ pub fn test_clear_architecture_cache_rows() {
     let _ = guard.execute("DELETE FROM architecture_cache", []);
     REFRESH_IN_PROGRESS[0].store(false, Ordering::Release);
     REFRESH_IN_PROGRESS[1].store(false, Ordering::Release);
+    REFRESH_IN_PROGRESS[2].store(false, Ordering::Release);
 }
 
 /// Opens a shared ephemeral SQLite file once for tests (must run before `routes()` architecture handlers).
@@ -241,6 +249,7 @@ mod tests {
     fn architecture_slot_keys() {
         assert_eq!(ArchitectureDocSlot::Specifications.key(), "specifications");
         assert_eq!(ArchitectureDocSlot::Ecdis.key(), "ecdis");
+        assert_eq!(ArchitectureDocSlot::Platform.key(), "platform");
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

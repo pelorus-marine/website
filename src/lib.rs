@@ -30,6 +30,7 @@ pub const COPYRIGHT_START_YEAR: i32 = 2026;
 
 const SPECS_GITHUB: &str = "https://github.com/pelorus-marine/specifications";
 const ECDIS_GITHUB: &str = "https://github.com/pelorus-marine/ecdis";
+const PLATFORM_GITHUB: &str = "https://github.com/pelorus-marine/platform";
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -37,6 +38,7 @@ struct IndexTemplate {
     year: i32,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
 }
 
 #[derive(Template)]
@@ -45,6 +47,7 @@ struct NotFoundTemplate {
     year: i32,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
 }
 
 #[derive(Template)]
@@ -56,6 +59,7 @@ struct DocGatewayTemplate {
     architecture_md_url: String,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
     body_html: String,
 }
 
@@ -68,6 +72,7 @@ struct TemporarilyUnavailableTemplate {
     architecture_md_url: String,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
 }
 
 #[derive(Template)]
@@ -76,6 +81,7 @@ struct InternalErrorTemplate {
     year: i32,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
 }
 
 fn github_ref_or_default() -> String {
@@ -98,12 +104,22 @@ fn ecdis_architecture_md_url() -> String {
     })
 }
 
+fn platform_architecture_md_url() -> String {
+    std::env::var("PELOURS_PLATFORM_ARCHITECTURE_URL").unwrap_or_else(|_| {
+        let github_ref = github_ref_or_default();
+        format!(
+            "https://raw.githubusercontent.com/pelorus-marine/platform/{github_ref}/ARCHITECTURE.md"
+        )
+    })
+}
+
 /// Renders the home page HTML from the Askama template.
 pub fn render_index_html() -> Result<String, askama::Error> {
     IndexTemplate {
         year: COPYRIGHT_START_YEAR,
         specifications_nav_class: "",
         ecdis_nav_class: "",
+        platform_nav_class: "",
     }
     .render()
 }
@@ -113,6 +129,7 @@ fn render_not_found_html() -> Result<String, askama::Error> {
         year: COPYRIGHT_START_YEAR,
         specifications_nav_class: "",
         ecdis_nav_class: "",
+        platform_nav_class: "",
     }
     .render()
 }
@@ -122,6 +139,7 @@ fn render_internal_server_error_html() -> Result<String, askama::Error> {
         year: COPYRIGHT_START_YEAR,
         specifications_nav_class: "",
         ecdis_nav_class: "",
+        platform_nav_class: "",
     }
     .render()
 }
@@ -166,6 +184,7 @@ async fn render_architecture_gateway(
     architecture_md_url: String,
     specifications_nav_class: &'static str,
     ecdis_nav_class: &'static str,
+    platform_nav_class: &'static str,
 ) -> Result<impl Reply, Rejection> {
     match architecture_cache::resolve_architecture_markdown(slot, &architecture_md_url).await {
         Ok(md) => {
@@ -174,6 +193,7 @@ async fn render_architecture_gateway(
                     markdown_github::ArchitectureGithubRepo::Specifications
                 }
                 ArchitectureDocSlot::Ecdis => markdown_github::ArchitectureGithubRepo::Ecdis,
+                ArchitectureDocSlot::Platform => markdown_github::ArchitectureGithubRepo::Platform,
             };
             let body_html =
                 markdown_github::architecture_markdown_to_html(&md, repo, &github_ref_or_default());
@@ -184,6 +204,7 @@ async fn render_architecture_gateway(
                 architecture_md_url,
                 specifications_nav_class,
                 ecdis_nav_class,
+                platform_nav_class,
                 body_html,
             };
             match tpl.render() {
@@ -202,6 +223,7 @@ async fn render_architecture_gateway(
                 architecture_md_url,
                 specifications_nav_class,
                 ecdis_nav_class,
+                platform_nav_class,
             };
             match tpl.render() {
                 Ok(html) => Ok(warp::reply::with_status(
@@ -218,7 +240,7 @@ fn redirect_to_specifications_slash() -> impl Reply {
     warp::redirect::redirect(warp::http::Uri::from_static("/specifications/"))
 }
 
-/// Full site filter: `/`, `/pelorus`, `/ecdis`, `/specifications/` ( `/specifications` redirects ),
+/// Full site filter: `/`, `/pelorus`, `/ecdis`, `/platform`, `/specifications/` ( `/specifications` redirects ),
 /// `/static/*`, `/favicon.ico`, plus rejection recovery.
 ///
 /// Architecture pages resolve **`ARCHITECTURE.md`** via SQLite cache + GitHub raw URLs; stale cache is served
@@ -258,6 +280,7 @@ pub fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Cl
                         url,
                         "active",
                         "",
+                        "",
                     )
                     .await
                 } else {
@@ -277,6 +300,24 @@ pub fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Cl
                 url,
                 "",
                 "active",
+                "",
+            )
+            .await
+        });
+
+    let platform_doc = warp::get()
+        .and(warp::path("platform"))
+        .and(warp::path::end())
+        .and_then(|| async {
+            let url = platform_architecture_md_url();
+            render_architecture_gateway(
+                ArchitectureDocSlot::Platform,
+                "Platform",
+                PLATFORM_GITHUB,
+                url,
+                "",
+                "",
+                "active",
             )
             .await
         });
@@ -290,6 +331,7 @@ pub fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Cl
         .or(specifications_exact_redirect)
         .or(specifications_doc)
         .or(ecdis_doc)
+        .or(platform_doc)
         .or(static_files)
         .or(favicon)
         .recover(handle_rejection)
@@ -345,7 +387,7 @@ mod tests {
         assert!(html.contains("pelorus-dial-root"));
         assert!(html.contains("/static/js/pelorus-dial.js"));
         assert!(html.contains("/static/css/pelorus-dial.css"));
-        assert!(html.contains("github.com/pelorus-marine/platform"));
+        assert!(html.contains("href=\"/platform\""));
         assert!(html.contains(&format!("&copy; {COPYRIGHT_START_YEAR} Pelorus Marine")));
     }
 
@@ -435,6 +477,24 @@ mod tests {
         let body = std::str::from_utf8(res.body()).expect("utf-8");
         assert!(body.contains("github.com/pelorus-marine/specifications"));
         assert!(body.contains("raw.githubusercontent.com/pelorus-marine/specifications"));
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn routes_platform_returns_html_and_github_link() {
+        test_init_cache_sqlite_once();
+        let res = warp::test::request()
+            .path("/platform")
+            .reply(&routes())
+            .await;
+        assert!(
+            res.status() == 200 || res.status() == 503,
+            "unexpected status {}",
+            res.status()
+        );
+        let body = std::str::from_utf8(res.body()).expect("utf-8");
+        assert!(body.contains("github.com/pelorus-marine/platform"));
+        assert!(body.contains("raw.githubusercontent.com/pelorus-marine/platform"));
     }
 
     #[tokio::test]

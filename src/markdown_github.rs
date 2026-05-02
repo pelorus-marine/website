@@ -7,10 +7,14 @@ const SPECS_REPO_WEB: &str = "https://github.com/pelorus-marine/specifications";
 /// GitHub web UI base for [ecdis](https://github.com/pelorus-marine/ecdis).
 const ECDIS_REPO_WEB: &str = "https://github.com/pelorus-marine/ecdis";
 
+/// GitHub web UI base for [platform](https://github.com/pelorus-marine/platform).
+const PLATFORM_REPO_WEB: &str = "https://github.com/pelorus-marine/platform";
+
 #[derive(Clone, Copy)]
 pub(crate) enum ArchitectureGithubRepo {
     Specifications,
     Ecdis,
+    Platform,
 }
 
 impl ArchitectureGithubRepo {
@@ -18,6 +22,7 @@ impl ArchitectureGithubRepo {
         match self {
             ArchitectureGithubRepo::Specifications => SPECS_REPO_WEB,
             ArchitectureGithubRepo::Ecdis => ECDIS_REPO_WEB,
+            ArchitectureGithubRepo::Platform => PLATFORM_REPO_WEB,
         }
     }
 }
@@ -199,6 +204,14 @@ mod tests {
         assert_eq!(
             rewrite_markdown_link_dest("../LICENSE", ECDIS_REPO_WEB, "feature/x"),
             "https://github.com/pelorus-marine/ecdis/blob/feature/x/LICENSE"
+        );
+    }
+
+    #[test]
+    fn parent_segments_normalized_platform() {
+        assert_eq!(
+            rewrite_markdown_link_dest("../LICENSE", PLATFORM_REPO_WEB, "main"),
+            "https://github.com/pelorus-marine/platform/blob/main/LICENSE"
         );
     }
 

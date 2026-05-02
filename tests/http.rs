@@ -24,8 +24,8 @@ async fn get_root_is_html_with_tagline() {
     assert!(body.contains("By sailors, for sailors."));
     assert!(body.contains("pelorus-dial-root"));
     assert!(
-        body.contains("github.com/pelorus-marine/platform"),
-        "navbar should link to Platform repository"
+        body.contains("href=\"/platform\""),
+        "navbar should link to Platform architecture page"
     );
 }
 
@@ -169,6 +169,25 @@ async fn get_specifications_slash_returns_html_with_github() {
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
     assert!(body.contains("github.com/pelorus-marine/specifications"));
     assert!(body.contains("raw.githubusercontent.com/pelorus-marine/specifications"));
+}
+
+#[tokio::test]
+#[serial]
+async fn get_platform_returns_html_with_github() {
+    test_init_cache_sqlite_once();
+    let res = warp::test::request()
+        .method("GET")
+        .path("/platform")
+        .reply(&routes())
+        .await;
+    assert!(
+        res.status() == 200 || res.status() == 503,
+        "unexpected {}",
+        res.status()
+    );
+    let body = std::str::from_utf8(res.body()).expect("utf-8 body");
+    assert!(body.contains("github.com/pelorus-marine/platform"));
+    assert!(body.contains("raw.githubusercontent.com/pelorus-marine/platform"));
 }
 
 #[tokio::test]
