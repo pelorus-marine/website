@@ -35,7 +35,7 @@ Unit tests live in `src/lib.rs`; integration tests in `tests/http.rs`. GitHub Ac
 
 ## Contributing and CI
 
-- **Rust** — CI uses **`dtolnay/rust-toolchain@stable`** with **`cargo test`** / **`clippy`** / **`fmt`** and **`--all-features`** / **`--locked`** where configured. **`website`** tracks **Rust stable independently** from **`platform`’s** pinned toolchain — this crate stays lightweight and avoids blocking on Inspector’s fixed Rust patch line.
+- **Rust** — CI pins **`1.88.0`** via **`dtolnay/rust-toolchain@master`** (same line as **`platform`** / **`specifications`**) and runs **`cargo fmt --all -- --check`**, **`cargo clippy … --all-targets -- -D warnings`**, **`cargo test`** / coverage with **`--all-features`** / **`--locked`** where configured.
 - **Node.js** — CI uses **`22`** (same line as **`platform/pelorus-inspector`** frontend jobs after alignment); use **`nvm`** / **`fnm`** / system Node when matching CI locally inside **`ts/`**.
 - **`ts/`** — Relies on **`tsc`** (`npm run check`) plus **esbuild**; there is **no ESLint configuration** here on purpose (`npm run lint` is intentionally absent — keep correctness via strict TypeScript and CI). ESLint-heavy UI work lives under **`pelorus-inspector`**.
 

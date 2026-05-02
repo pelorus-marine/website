@@ -30,6 +30,9 @@ permissions:
   packages: write
   id-token: write
 
+env:
+  RUST_TOOLCHAIN: "1.88.0"
+
 jobs:
   publish-and-deploy:
     runs-on: ubuntu-latest
@@ -108,7 +111,9 @@ jobs:
       - name: Verify JS bundle matches committed output
         run: git diff --exit-code static/js/pelorus-dial.js
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
 
       - uses: Swatinem/rust-cache@v2
 
