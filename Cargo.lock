@@ -1716,7 +1716,7 @@ dependencies = [
 
 [[package]]
 name = "website"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "askama",
  "pulldown-cmark",
