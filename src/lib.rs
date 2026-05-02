@@ -345,6 +345,7 @@ mod tests {
         assert!(html.contains("pelorus-dial-root"));
         assert!(html.contains("/static/js/pelorus-dial.js"));
         assert!(html.contains("/static/css/pelorus-dial.css"));
+        assert!(html.contains("github.com/pelorus-marine/platform"));
         assert!(html.contains(&format!("&copy; {COPYRIGHT_START_YEAR} Pelorus Marine")));
     }
 

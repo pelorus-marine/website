@@ -23,6 +23,10 @@ async fn get_root_is_html_with_tagline() {
     let body = std::str::from_utf8(res.body()).expect("utf-8 body");
     assert!(body.contains("By sailors, for sailors."));
     assert!(body.contains("pelorus-dial-root"));
+    assert!(
+        body.contains("github.com/pelorus-marine/platform"),
+        "navbar should link to Platform repository"
+    );
 }
 
 #[tokio::test]
