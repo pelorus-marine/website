@@ -17,6 +17,7 @@ pub use architecture_cache::{bootstrap_cache_db_path, init_cache_db};
 pub use architecture_cache::{test_clear_architecture_cache_rows, test_init_cache_sqlite_once};
 
 /// Resolve listen address from **`PORT`** (default **8080**). Binds IPv4 **`0.0.0.0`**.
+#[must_use]
 pub fn listen_socket_addr_from_env() -> std::net::SocketAddr {
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     let port: u16 = std::env::var("PORT")
@@ -114,6 +115,10 @@ fn platform_architecture_md_url() -> String {
 }
 
 /// Renders the home page HTML from the Askama template.
+///
+/// # Errors
+///
+/// Returns [`askama::Error`] when template rendering fails.
 pub fn render_index_html() -> Result<String, askama::Error> {
     IndexTemplate {
         year: COPYRIGHT_START_YEAR,
@@ -243,7 +248,7 @@ fn redirect_to_specifications_slash() -> impl Reply {
 /// Full site filter: `/`, `/pelorus`, `/ecdis`, `/platform`, `/specifications/` ( `/specifications` redirects ),
 /// `/static/*`, `/favicon.ico`, plus rejection recovery.
 ///
-/// Architecture pages resolve **`ARCHITECTURE.md`** via SQLite cache + GitHub raw URLs; stale cache is served
+/// Architecture pages resolve **`ARCHITECTURE.md`** via `SQLite` cache + GitHub raw URLs; stale cache is served
 /// instantly while a single background task per slot revalidates when the TTL has passed.
 pub fn routes() -> impl Filter<Extract = (impl Reply,), Error = Infallible> + Clone + Send + 'static
 {

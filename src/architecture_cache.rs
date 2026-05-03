@@ -1,4 +1,4 @@
-//! SQLite cache for GitHub-sourced `ARCHITECTURE.md` (ephemeral; not in git).
+//! `SQLite` cache for GitHub-sourced `ARCHITECTURE.md` (ephemeral; not in git).
 
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -64,6 +64,9 @@ pub(crate) fn default_cache_sqlite_path() -> std::path::PathBuf {
     std::env::temp_dir().join("pelorus-website-architecture-cache.sqlite")
 }
 
+/// # Panics
+///
+/// Panics if the OS temporary directory path is not valid UTF-8 (practically never on supported hosts).
 pub fn bootstrap_cache_db_path() {
     if std::env::var_os("PELOURS_CACHE_DB_PATH").is_some() {
         return;
@@ -76,6 +79,9 @@ pub fn bootstrap_cache_db_path() {
     }
 }
 
+/// # Errors
+///
+/// Returns [`rusqlite::Error`] when opening the database or applying schema fails.
 pub fn init_cache_db(path: &Path) -> Result<(), rusqlite::Error> {
     if CACHE_DB.get().is_some() {
         return Ok(());
@@ -85,10 +91,8 @@ pub fn init_cache_db(path: &Path) -> Result<(), rusqlite::Error> {
     conn.execute_batch("PRAGMA journal_mode=WAL;\nPRAGMA synchronous=NORMAL;")?;
     conn.execute_batch(SCHEMA)?;
     let arc = Arc::new(Mutex::new(conn));
-    match CACHE_DB.set(arc) {
-        Ok(()) => Ok(()),
-        Err(_) => Ok(()),
-    }
+    let _ = CACHE_DB.set(arc);
+    Ok(())
 }
 
 fn conn() -> &'static Arc<Mutex<Connection>> {
@@ -100,7 +104,7 @@ fn conn() -> &'static Arc<Mutex<Connection>> {
 fn now_unix_secs() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
+        .map(|d| i64::try_from(d.as_secs()).unwrap_or(i64::MAX))
         .unwrap_or(0)
 }
 
@@ -145,12 +149,12 @@ async fn upsert_row(
     tokio::task::spawn_blocking(move || {
         let guard = db.lock().expect("sqlite mutex poisoned");
         guard.execute(
-            r#"INSERT INTO architecture_cache (slot, source_url, markdown, fetched_at_unix)
+            r"INSERT INTO architecture_cache (slot, source_url, markdown, fetched_at_unix)
                VALUES (?1, ?2, ?3, ?4)
                ON CONFLICT(slot) DO UPDATE SET
                  source_url = excluded.source_url,
                  markdown = excluded.markdown,
-                 fetched_at_unix = excluded.fetched_at_unix"#,
+                 fetched_at_unix = excluded.fetched_at_unix",
             rusqlite::params![key, source_url, markdown, now],
         )?;
         Ok::<_, rusqlite::Error>(())

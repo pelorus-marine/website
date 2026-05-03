@@ -31,7 +31,7 @@ permissions:
   id-token: write
 
 env:
-  RUST_TOOLCHAIN: "1.88.0"
+  RUST_TOOLCHAIN: "1.90.0"
 
 jobs:
   publish-and-deploy:

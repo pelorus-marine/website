@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .enable_all()
         .build()?
         .block_on(async move {
-            println!("Pelorus website listening on http://{}", addr);
+            println!("Pelorus website listening on http://{addr}");
             warp::serve(website::routes()).run(addr).await;
         });
 
