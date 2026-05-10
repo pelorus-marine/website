@@ -8,12 +8,12 @@ authors = ["Pelorus Marine contributors <https://github.com/pelorus-marine>"]
 publish = false
 
 [dependencies]
-askama = "0.15.6"
+askama = "0.16.0"
 pulldown-cmark = { version = "0.13.3", default-features = false, features = ["html"] }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
-rusqlite = { version = "0.37", features = ["bundled"] }
-tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread"] }
-warp = { version = "0.4.2", features = ["server", "test"] }
+reqwest = { version = "0.13.3", default-features = false, features = ["rustls"] }
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
+warp = { version = "0.4.3", features = ["server", "test"] }
 
 [dev-dependencies]
 serial_test = "3"
